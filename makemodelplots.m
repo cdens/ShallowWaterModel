@@ -1,4 +1,4 @@
-function makemodelplots(savedir,var,x,y,t,xhovind,yhovind,varname,strtype,timeunits,makegif)
+function makemodelplots(savedir,var,x,y,t,xhovind,yhovind,varname,strtype,timeunits,distunits,makegif)
 close all
 
 %% vertical hovmoller
@@ -12,7 +12,7 @@ colormap(ax,jet);
 shading(ax, 'interp')
 
 xlabel(ax,['Time (',timeunits,')'])
-ylabel(ax,'Y (m)')
+ylabel(ax,['Y (',distunits,')'])
 box(ax,'on')
 grid(ax,'on')
 set(ax,'layer','top')
@@ -33,7 +33,7 @@ colormap(ax,jet);
 shading(ax, 'interp')
 
 xlabel(ax,['Time (',timeunits,')'])
-ylabel(ax,'X (m)')
+ylabel(ax,['X (',distunits,')'])
 box(ax,'on')
 grid(ax,'on')
 set(ax,'layer','top')
@@ -66,8 +66,8 @@ for i = framestodo
     caxis(ax,cbounds)
     shading(ax, 'interp')
 
-    xlabel(ax,'X (m)')
-    ylabel(ax,'Y (m)')
+    xlabel(ax,['X (',distunits,')'])
+    ylabel(ax,['Y (',distunits,')'])
     box(ax,'on')
     grid(ax,'on')
     set(ax,'layer','top')

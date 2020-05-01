@@ -4,7 +4,7 @@
 % Driver function to run 2D hyperbolic shallow water model
 
 function [U,V,psi,zeta,x,y,t,residual] = runShallowWaterModel(psi,nx,dx,ny,dy,nt,dt,...
-    theta,minresidual,maxiterations,Ftau,kx,ky,ctrlat,planetype,xbound)
+    theta,minresidual,maxiterations,Ftau,kx,ky,ctrlat,planetype,xbound,gridtype)
 
 
 %% configuring wind stress curl flux 
@@ -26,8 +26,19 @@ end
 %% setting up model grid 
 
 %preallocating 
-Uout = NaN.*ones(nx+1,ny,nt+1);
-Vout = NaN.*ones(nx,ny+1,nt+1);
+switch(lower(gridtype))
+    case 'c'
+        Uout = NaN.*ones(nx+1,ny,nt+1);
+        Vout = NaN.*ones(nx,ny+1,nt+1);
+        
+    case 'd'
+        Uout = NaN.*ones(nx,ny+1,nt+1);
+        Vout = NaN.*ones(nx+1,ny,nt+1);
+        
+    otherwise
+        error('Invalid grid type selected')
+        
+end
 psiout = NaN.*ones(nx,ny,nt+1);
 zetaout = NaN.*ones(nx,ny,nt+1);
 residual = NaN.*ones(1,nt+1);
@@ -39,10 +50,16 @@ t = (0:nt)*dt;
 
 %calculating beta 
 ctry = y(round(ny/2));
+switch(lower(gridtype))
+    case 'c'
+        yface = [y(1)-dy,y+dy];
+    case 'd'
+        yface = y;
+end
 yface = [y(1)-dy,y+dy]; %y values on faces (matching V locations)
 switch(lower(planetype))
     case 'real' %beta changing with latitude
-        lat = ctrlat + km2deg(yface - ctry);
+        lat = ctrlat + km2deg((yface - ctry)/1000);
         beta = 2.*7.27E-5.*cosd(lat);
     case 'beta'
         beta(1:length(yface)) = 2.*7.27E-5.*cosd(ctrlat); 
@@ -57,20 +74,27 @@ end
 %% configuring initial fields for psi, U, V, zeta
 
 % getting initial U/V from psi
-[U,V] = getvelocityfrompsi(psi,dx,dy,xbound);
+[U,V] = getvelocityfrompsi(psi,dx,dy,xbound,gridtype);
 
 % getting initial zeta from U/V (zeta = dV/dx - dU/dy) (requires some grid
-% manipulation to get properly located U and V values)
-Uctr = zeros(nx+2,ny+2); Vctr = Uctr; %preallocating with zeros
-Uctr(2:end-1,2:end-1) = 0.5.*(U(1:end-1,:) + U(2:end,:)); %adding U,V values in grid centers
-Vctr(2:end-1,2:end-1) = 0.5.*(V(:,1:end-1) + V(:,2:end));
-zeta = NaN.*ones(nx,ny); %preallocation
-for i = 1:nx
-    for j = 1:ny
-        zeta(i,j) = (Uctr(i+1,j+2) - Uctr(i+1,j))/(2*dy) - (Vctr(i+2,j+1) - Vctr(i,j+1))/(2*dx);
-    end
+% manipulation to get properly located U and V values for C grid)
+switch(lower(gridtype))
+    case 'c'
+        Uctr = zeros(nx+2,ny+2); Vctr = Uctr; %preallocating with zeros
+        Uctr(2:end-1,2:end-1) = 0.5.*(U(1:end-1,:) + U(2:end,:)); %adding U,V values in grid centers
+        Vctr(2:end-1,2:end-1) = 0.5.*(V(:,1:end-1) + V(:,2:end));
+        zeta = NaN.*ones(nx,ny); %preallocation
+        for i = 1:nx
+            for j = 1:ny
+                zeta(i,j) = (Uctr(i+1,j+2) - Uctr(i+1,j))/(2*dy) - (Vctr(i+2,j+1) - Vctr(i,j+1))/(2*dx);
+            end
+        end
+        clear Uctr Vctr %don't need these anymore
+
+    case 'd'
+        zeta = diff(V,1,1)./dx - diff(U,1,2)./dy;     
 end
-clear Uctr Vctr %don't need these anymore
+
 
 % generating C matrix for psi 
 C_psi = zeros(nx,ny,6);
@@ -89,7 +113,12 @@ zetaout(:,:,1) = zeta;
 for i = 1:nt
     
     %calculate C matrix (eg Ckk)
-    C = getiterationmatrix(U,V,Ftau,beta,kx,ky,nx,dx,ny,dy);
+    switch(lower(gridtype))
+        case 'c'
+            C = getiterationmatrix_Cgrid(U,V,Ftau,beta,kx,ky,nx,dx,ny,dy);
+        case 'd'
+            C = getiterationmatrix_Dgrid(U,V,Ftau,beta,kx,ky,nx,dx,ny,dy,xbound);
+    end
     
     %calculate LHS and RHS iteration matrices
     C_L = -1.*C.*dt.*theta;
@@ -107,7 +136,7 @@ for i = 1:nt
     [psi,~] = iterate_cgm(C_psi,psi,zeta,nx,ny,xbound,minresidual,maxiterations);
     
     %calculate velocities from streamfunction
-    [U,V] = getvelocityfrompsi(psi,dx,dy,xbound);
+    [U,V] = getvelocityfrompsi(psi,dx,dy,xbound,gridtype);
             
     %add current iteration to output variables
     Uout(:,:,i+1) = U;
