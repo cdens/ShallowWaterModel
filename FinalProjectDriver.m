@@ -10,13 +10,15 @@ clc
 
 %% Initializing variables
 
-dx = 10000; %dx = 10 km
-dy = 10000; %dy = 10 km
-dt = 1800; %dt = 30 mins
+dx = 20000; %dx = 10 km
+dy = 20000; %dy = 10 km
+dt = 21600; %dt = 0.25 days (6 hours)
+% dt = 21600/2; %dt = 0.125 days (3 hours)
+% dt = 60; % 1 minute
 
 nx = 200; %2000 km domain w/ dx = 10 km
 ny = 100; %1000 km domain w/ dy = 10 km
-nt = 1000; %500 hours time domain
+nt = 1000; %200 days time domain @ 6 hrly, 100 days @ 3 hrly
 
 theta = 0.5; %Crank-Nicholson semi-implicit spatial discretization
 minresidual = 1E-8;
@@ -33,12 +35,12 @@ gridtype = 'D'; %either C or D grid (determines which faces velocities are on)
 
 
 %% Negative control run- no flow, no fluxes
-psi_initial = zeros(nx,ny); %no flow
-[~,~,psi,~,~,~,~,~] = runShallowWaterModel(psi_initial,nx,dx,ny,dy,10,dt,...
+zeta_initial = zeros(nx,ny); %no flow
+[~,~,psi,~,~,~,~,~] = runShallowWaterModel(zeta_initial,nx,dx,ny,dy,10,dt,...
     theta,minresidual,maxiterations,Ftau,kx,ky,ctrlat,planetype,xbound,'c');
 disp(['Test Run Grid C: AVG psi_f = ',num2str(nanmean(squeeze(psi(:,:,end)),'all')),...
     ',  STD psi_f = ',num2str(nanstd(squeeze(psi(:,:,end)),0,'all'))])
-[~,~,psi,~,x,y,~,~] = runShallowWaterModel(psi_initial,nx,dx,ny,dy,10,dt,...
+[~,~,psi,~,x,y,~,~] = runShallowWaterModel(zeta_initial,nx,dx,ny,dy,10,dt,...
     theta,minresidual,maxiterations,Ftau,kx,ky,ctrlat,planetype,xbound,'d');
 disp(['Test Run Grid D: AVG psi_f = ',num2str(nanmean(squeeze(psi(:,:,end)),'all')),...
     ',  STD psi_f = ',num2str(nanstd(squeeze(psi(:,:,end)),0,'all'))])
@@ -54,26 +56,26 @@ r = 100000; %radius of wave = 100 km
 rr = sqrt((xx-xctr).^2 + (yy-yctr).^2);
 
 %creating psi initial
-psimax = 10000; 
-psi_initial = zeros(nx,ny); %no flow
-psi_initial(rr <= r) = cos((pi/(2*r)).*rr(rr <= r)); %cosine tapered to 0 at distance r
-psi_initial = psimax.*psi_initial./max(psi_initial(:));
-[U,V] = getvelocityfrompsi(psi_initial,dx,dy,xbound,'c');
-% % % Uctr = 0.5.*(U(:,1:end-1) + U(:,2:end)); %D grid
-% % % Vctr = 0.5.*(V(1:end-1,:) + V(2:end,:));
-% % % % Vctr = 0.5.*(V(:,1:end-1) + V(:,2:end)); %C grid
-% % % % Uctr = 0.5.*(U(1:end-1,:) + U(2:end,:));
-% % % disp(max(U(:)));
-% % % quiver(x,y,Uctr',Vctr')
+zetamax = -5E-6; 
+zeta_initial = zeros(nx,ny); %no flow
+zeta_initial(rr <= r) = cos((pi/(2*r)).*rr(rr <= r)); %cosine tapered to 0 at distance r
+zeta_initial = zetamax.*zeta_initial./max(zeta_initial(:));
 
 %running and making output plots
-[U,V,psi,zeta,x,y,t,residual] = runShallowWaterModel(psi_initial,nx,dx,ny,dy,50,dt,...
-    theta,minresidual,maxiterations,Ftau,kx,ky,ctrlat,planetype,'wall','c');
+[U,V,psi,zeta,x,y,t,residual] = runShallowWaterModel(zeta_initial,nx,dx,ny,dy,500,dt,...
+    theta,minresidual,maxiterations,Ftau,kx,ky,ctrlat,planetype,'periodic','c');
 
-[U,V,psi,zeta,x,y,t,residual] = runShallowWaterModel(psi_initial,nx,dx,ny,dy,50,dt,...
-    theta,minresidual,maxiterations,Ftau,kx,ky,ctrlat,'f','wall','c');
+[U,V,psi,zeta,x,y,t,residual] = runShallowWaterModel(zeta_initial,nx,dx,ny,dy,500,dt,...
+    theta,minresidual,maxiterations,Ftau,kx,ky,ctrlat,'f','periodic','c');
 
-makemodelplots('temp',psi,x/1000,y/1000,t/(24*3600),nx/2,ny/2,'\Psi (m^2/s)','%04.2f','days','m',true)
+[U,V,psi,zeta,x,y,t,residual] = runShallowWaterModel(zeta_initial,nx,dx,ny,dy,500,dt,...
+    theta,minresidual,maxiterations,Ftau,kx,ky,ctrlat,'beta','periodic','c');
+
+[U,V,psi,zeta,x,y,t,residual] = runShallowWaterModel(zeta_initial,nx,dx,ny,dy,500,dt,...
+    theta,minresidual,maxiterations,Ftau,kx,ky,ctrlat,planetype,'periodic','d');
+
+makemodelplots('temp',psi,x/1000,y/1000,t/(24*3600),nx/2,ny/2,'\Psi (m^2/s)','%04.2f','days','km',true,1:501)
+
 %% Racing Rossby waves
 
 

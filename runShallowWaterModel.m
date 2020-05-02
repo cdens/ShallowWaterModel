@@ -3,7 +3,7 @@
 %
 % Driver function to run 2D hyperbolic shallow water model
 
-function [U,V,psi,zeta,x,y,t,residual] = runShallowWaterModel(psi,nx,dx,ny,dy,nt,dt,...
+function [U,V,psi,zeta,x,y,t,residual] = runShallowWaterModel(zeta,nx,dx,ny,dy,nt,dt,...
     theta,minresidual,maxiterations,Ftau,kx,ky,ctrlat,planetype,xbound,gridtype)
 
 
@@ -60,41 +60,18 @@ yface = [y(1)-dy,y+dy]; %y values on faces (matching V locations)
 switch(lower(planetype))
     case 'real' %beta changing with latitude
         lat = ctrlat + km2deg((yface - ctry)/1000);
-        beta = 2.*7.27E-5.*cosd(lat);
+        beta = 2.*7.27E-5.*cosd(lat)./6356000;
     case 'beta'
-        beta(1:length(yface)) = 2.*7.27E-5.*cosd(ctrlat); 
+        beta(1:length(yface)) = 2.*7.27E-5.*cosd(ctrlat)./6356000; 
     case 'f'
         beta(1:length(yface)) = 0;
     otherwise
         warning('Invalid plane type specified- reverting to beta plane')
-        beta(1:length(yface)) = 2.*7.27E-5.*cosd(ctrlat); 
+        beta(1:length(yface)) = 2.*7.27E-5.*cosd(ctrlat).*dphidy; 
 end
 
 
 %% configuring initial fields for psi, U, V, zeta
-
-% getting initial U/V from psi
-[U,V] = getvelocityfrompsi(psi,dx,dy,xbound,gridtype);
-
-% getting initial zeta from U/V (zeta = dV/dx - dU/dy) (requires some grid
-% manipulation to get properly located U and V values for C grid)
-switch(lower(gridtype))
-    case 'c'
-        Uctr = zeros(nx+2,ny+2); Vctr = Uctr; %preallocating with zeros
-        Uctr(2:end-1,2:end-1) = 0.5.*(U(1:end-1,:) + U(2:end,:)); %adding U,V values in grid centers
-        Vctr(2:end-1,2:end-1) = 0.5.*(V(:,1:end-1) + V(:,2:end));
-        zeta = NaN.*ones(nx,ny); %preallocation
-        for i = 1:nx
-            for j = 1:ny
-                zeta(i,j) = (Uctr(i+1,j+2) - Uctr(i+1,j))/(2*dy) - (Vctr(i+2,j+1) - Vctr(i,j+1))/(2*dx);
-            end
-        end
-        clear Uctr Vctr %don't need these anymore
-
-    case 'd'
-        zeta = diff(V,1,1)./dx - diff(U,1,2)./dy;     
-end
-
 
 % generating C matrix for psi 
 C_psi = zeros(nx,ny,6);
@@ -102,6 +79,12 @@ cpall = [-2/dx^2 - 2/dy^2,  1/dx^2,  1/dy^2,  1/dx^2,  1/dy^2,  0];
 for i = 1:6
     C_psi(:,:,i) = cpall(i);
 end
+
+%getting psi from zeta (initialize psi with zeros)
+[psi,~] = iterate_cgm(C_psi,zeros(nx,ny),zeta,nx,ny,xbound,minresidual,maxiterations);
+
+% getting initial U/V from psi
+[U,V] = getvelocityfrompsi(psi,dx,dy,xbound,gridtype);
 
 % recording initial states
 Uout(:,:,1) = U;
@@ -154,8 +137,16 @@ end
 
 
 %% renaming variables for return
-U = Uout;
-V = Vout;
+switch lower(gridtype)
+    case 'c'
+        U = 0.5.*(Uout(1:end-1,:,:) + Uout(2:end,:,:));
+        V = 0.5.*(Vout(:,1:end-1,:) + Vout(:,2:end,:));
+        
+    case 'd'
+        U = 0.5.*(Uout(:,1:end-1,:) + Uout(:,2:end,:));
+        V = 0.5.*(Vout(1:end-1,:,:) + Vout(2:end,:,:));
+        
+end
 psi = psiout;
 zeta = zetaout;
 

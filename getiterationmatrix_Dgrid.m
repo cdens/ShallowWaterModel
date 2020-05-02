@@ -32,8 +32,8 @@ Vp = Vm;
 
 Um(2:end-1,:) = 0.5.*(Umc(1:end-1,:) + Umc(2:end,:));
 Up(2:end-1,:) = 0.5.*(Upc(1:end-1,:) + Upc(2:end,:));
-Vm(:,2:end-1) = 0.5.*(Vmc(:,1:end-1) + Umc(:,2:end));
-Vp(:,2:end-1) = 0.5.*(Vpc(:,1:end-1) + Upc(:,2:end));
+Vm(:,2:end-1) = 0.5.*(Vmc(:,1:end-1) + Vmc(:,2:end));
+Vp(:,2:end-1) = 0.5.*(Vpc(:,1:end-1) + Vpc(:,2:end));
 
 %periodic u boundary
 if strcmpi(xbound,'periodic')

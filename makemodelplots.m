@@ -1,4 +1,4 @@
-function makemodelplots(savedir,var,x,y,t,xhovind,yhovind,varname,strtype,timeunits,distunits,makegif)
+function makemodelplots(savedir,var,x,y,t,xhovind,yhovind,varname,strtype,timeunits,distunits,makegif,framestodo)
 close all
 
 %% vertical hovmoller
@@ -46,11 +46,10 @@ saveas(gcf,[savedir,'_horzhov'],'png');
 %% animation + final snapshot
 
 figure(); 
-cbounds = [min(var(:)),max(var(:))];
+startvar = squeeze(var(:,:,1));
+cbounds = [min(startvar(:)),max(startvar(:))];
 
-if makegif
-    framestodo = 1:5:length(t);
-else
+if ~makegif
     framestodo = length(t);
 end
 

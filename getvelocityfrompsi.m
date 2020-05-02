@@ -15,7 +15,7 @@ ny = size(psi,2);
 switch(lower(gridtype))
     case 'c'
         uf = zeros(nx+2,ny+1);
-        uf(2:end-1,2:end-1) = diff(psi,1,2)./dy;
+        uf(2:end-1,2:end-1) = -diff(psi,1,2)./dy;
         if strcmpi(xbound,'periodic')
             uf(1,:) = uf(end-1,:);
             uf(end,:) = uf(2,:);
