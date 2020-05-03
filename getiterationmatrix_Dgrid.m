@@ -55,7 +55,7 @@ for i = 1:nx
         C(i,j,3) = -Vm(i,jface)/dy + ky/dy^2;
         C(i,j,4) = Up(iface-1,j)/dx + kx/dx^2;
         C(i,j,5) = Vp(i,jface-1)/dy + ky/dy^2;
-        C(i,j,6) = Ftau(i,j) - beta(jface-1)*Vp(i,jface-1) - beta(jface)*Vm(i,jface);
+        C(i,j,6) = Ftau(i,j) - beta(j)*Vp(i,jface-1) - beta(j)*Vm(i,jface);
     end
 end
 

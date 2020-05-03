@@ -56,7 +56,7 @@ switch(lower(gridtype))
     case 'd'
         yface = y;
 end
-yface = [y(1)-dy,y+dy]; %y values on faces (matching V locations)
+% yface = [y(1)-dy,y+dy]; %y values on faces (matching V locations)
 switch(lower(planetype))
     case 'real' %beta changing with latitude
         lat = ctrlat + km2deg((yface - ctry)/1000);
