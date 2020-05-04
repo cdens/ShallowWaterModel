@@ -46,6 +46,8 @@ saveas(gcf,[savedir,'_horzhov'],'png');
 %% animation + final snapshot
 
 figure(); 
+set(gcf,'position',[1,1,1.8,1].*get(gcf,'position'))
+
 startvar = squeeze(var(:,:,1));
 cbounds = [min(startvar(:)),max(startvar(:))];
 
@@ -59,6 +61,8 @@ for i = framestodo
     
     clf
     ax = gca;
+    
+    axis equal
 
     pcolor(ax,x,y,squeeze(var(:,:,i))'); 
     colormap(ax,jet); 

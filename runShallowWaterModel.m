@@ -3,8 +3,8 @@
 %
 % Driver function to run 2D hyperbolic shallow water model
 
-function [U,V,psi,zeta,x,y,t,residual] = runShallowWaterModel(zeta,nx,dx,ny,dy,nt,dt,...
-    theta,minresidual,maxiterations,Ftau,kx,ky,ctrlat,planetype,xbound,gridtype,isnonlinear)
+function [U,V,psi,zeta,x,y,t] = runShallowWaterModel(zeta,nx,dx,ny,dy,nt,dt,...
+    minresidual,maxiterations,Ftau,kx,ky,ctrlat,planetype,xbound,gridtype,isnonlinear)
 
 
 %% configuring wind stress curl flux 
@@ -45,7 +45,6 @@ switch(lower(gridtype))
 end
 psiout = NaN.*ones(nx,ny,nt+1);
 zetaout = NaN.*ones(nx,ny,nt+1);
-residual = NaN.*ones(1,nt+1);
 
 %getting x/y/t
 x = (0:nx-1)*dx;
@@ -110,17 +109,23 @@ for i = 1:nt
             C = getiterationmatrix_Dgrid(U,V,Ftau,beta,kx,ky,nx,dx,ny,dy,xbound,isnonlinear);
     end
     
-    %calculate LHS and RHS iteration matrices
-    C_L = -1.*C.*dt.*theta;
-    C_R = C.*dt.*(1 - theta);
-    C_L(:,:,1) = 1 + C_L(:,:,1);
-    C_R(:,:,1) = 1 + C_R(:,:,1);
+    %adding dissipation
+%     C(:,:,1) = C(:,:,1) - 1E-6;
 
-    %explicitly solve RHS of problem
-    zeta_R = iterate2Dexplicit(zeta,nx,ny,C_R,xbound);
-
-    %iterate voriticity equation forward in time with CGKM (hyperbolic problem)
-    [zeta,curresidual] = iterate_cgm(C_L,zeta,zeta_R,nx,ny,xbound,minresidual,maxiterations);
+    %explicitly solve d/dt(zeta^n) 
+    ddt_zeta = iterate2Dexplicit(zeta,nx,ny,C,xbound);
+    if i == 1 %reindex time derivatives
+        ddt_n = ddt_zeta;
+        ddt_nm1 = ddt_zeta;
+        ddt_nm2 = ddt_zeta;
+    else
+        ddt_nm2 = ddt_nm1;
+        ddt_nm1 = ddt_n;
+        ddt_n = ddt_zeta;
+    end
+    
+    %AB3 iterative method
+    zeta = zeta + dt.*(23.*ddt_n - 16.*ddt_nm1 + 5.*ddt_nm2)./12;
     
     %calculate streamfunction from voriticity with CGKM (elliptic problem)
     [psi,~] = iterate_cgm(C_psi,psi(2:end-1,2:end-1),zeta,nx,ny,xbound,minresidual,maxiterations);
@@ -134,7 +139,6 @@ for i = 1:nt
     Vout(:,:,i+1) = V;
     psiout(:,:,i+1) = psi(2:end-1,2:end-1);
     zetaout(:,:,i+1) = zeta;
-    residual(i) = curresidual;
     
     %print timestep number to command line
     if rem(i,10) == 0

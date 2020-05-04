@@ -16,8 +16,8 @@ switch(lower(gridtype))
 
     case 'a'
 
-        u = -1*(psi(2:end-1,3:end) - psi(2:end-1,1:end-2))./dy;
-        v = (psi(3:end,2:end-1) - psi(1:end-2,2:end-1))./dx;
+        u = -0.5.*(psi(2:end-1,3:end) - psi(2:end-1,1:end-2))./dy;
+        v = 0.5.*(psi(3:end,2:end-1) - psi(1:end-2,2:end-1))./dx;
         
         
     case 'c'
