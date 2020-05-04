@@ -10,14 +10,14 @@ clc
 
 %% Initializing variables
 
-dx = 20000; %dx = 10 km
-dy = 20000; %dy = 10 km
+dx = 20000; %dx = 20 km
+dy = 20000; %dy = 20 km
 % dt = 21600; %dt = 0.25 days (6 hours)
 % dt = 21600/2; %dt = 0.125 days (3 hours)
 dt = 60; % 1 minute
 
-nx = 200; %2000 km domain w/ dx = 10 km
-ny = 100; %1000 km domain w/ dy = 10 km
+nx = 200; %4000 km domain w/ dx = 20 km
+ny = 100; %2000 km domain w/ dy = 20 km
 nt = 1000; %200 days time domain @ 6 hrly, 100 days @ 3 hrly
 
 theta = 0.5; %Crank-Nicholson semi-implicit spatial discretization
@@ -52,9 +52,9 @@ zeta_initial = zeros(nx,ny); %no flow
 
 %generating psi
 [yy,xx] = meshgrid(y,x);
-xctr = 1750000; %starting x = 1750 km
+xctr = 3250000; %starting x = 1750 km
 yctr = dy*ny/2; %starting y = halfway up domain
-r = 100000; %radius of wave = 100 km
+r = 500000; %radius of wave = 100 km
 rr = sqrt((xx-xctr).^2 + (yy-yctr).^2);
 
 %creating psi initial
@@ -73,19 +73,24 @@ zeta_initial = zetamax.*zeta_initial./max(zeta_initial(:));
 % [U,V,psi,zeta,x,y,t,residual] = runShallowWaterModel(zeta_initial,nx,dx,ny,dy,500,dt,...
 %     theta,minresidual,maxiterations,Ftau,kx,ky,ctrlat,'f','wall','d',isnonlinear);
 
+RossbySpeed = (2.*7.27E-5.*cosd(ctrlat)./6356000)*4*pi^2/(2*r*1E3)^2; %Rossby wave speed
+TimeToPropagate = (nx*dx/RossbySpeed)/(24*3600); %time to propagate across dom ain in days
+
 %beta plane
 % [U,V,psi,zeta,x,y,t,residual] = runShallowWaterModel(zeta_initial,nx,dx,ny,dy,500,dt,...
-%     theta,minresidual,maxiterations,Ftau,kx,ky,ctrlat,'beta','periodic','c',isnonlinear);
+%     theta,minresidual,maxiterations,Ftau,kx,ky,ctrlat,'beta','periodic','a',isnonlinear);
+[U,V,psi,zeta,x,y,t,residual] = runShallowWaterModel(zeta_initial,nx,dx,ny,dy,500,dt,...
+    theta,minresidual,maxiterations,Ftau,kx,ky,ctrlat,'beta','periodic','c',isnonlinear);
 % [U,V,psi,zeta,x,y,t,residual] = runShallowWaterModel(zeta_initial,nx,dx,ny,dy,500,dt,...
 %     0,minresidual,maxiterations,Ftau,kx,ky,ctrlat,'beta','periodic','c',isnonlinear); %forward Euler method
 % [U,V,psi,zeta,x,y,t,residual] = runShallowWaterModel(zeta_initial,nx,dx,ny,dy,500,dt,...
 %     1,minresidual,maxiterations,Ftau,kx,ky,ctrlat,'beta','periodic','c',isnonlinear); %backward Euler method
-[U,V,psi,zeta,x,y,t,residual] = runShallowWaterModel(zeta_initial,nx,dx,ny,dy,500,dt,...
-    theta,minresidual,maxiterations,Ftau,kx,ky,ctrlat,'beta','periodic','d',isnonlinear);
+% [U,V,psi,zeta,x,y,t,residual] = runShallowWaterModel(zeta_initial,nx,dx,ny,dy,500,dt,...
+%     theta,minresidual,maxiterations,Ftau,kx,ky,ctrlat,'beta','periodic','d',isnonlinear);
 % [U,V,psi,zeta,x,y,t,residual] = runShallowWaterModel(zeta_initial,nx,dx,ny,dy,500,dt,...
 %     theta,minresidual,maxiterations,Ftau,kx,ky,ctrlat,'beta','wall','c',isnonlinear);
-[U,V,psi,zeta,x,y,t,residual] = runShallowWaterModel(zeta_initial,nx,dx,ny,dy,500,dt,...
-    theta,minresidual,maxiterations,Ftau,kx,ky,ctrlat,'beta','wall','d',isnonlinear);
+% [U,V,psi,zeta,x,y,t,residual] = runShallowWaterModel(zeta_initial,nx,dx,ny,dy,500,dt,...
+%     theta,minresidual,maxiterations,Ftau,kx,ky,ctrlat,'beta','wall','d',isnonlinear);
 
 %real
 % [U,V,psi,zeta,x,y,t,residual] = runShallowWaterModel(zeta_initial,nx,dx,ny,dy,500,dt,...

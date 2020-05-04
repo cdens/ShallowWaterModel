@@ -31,8 +31,8 @@ for i = 1:nx
         C(i,j,3) = -isnonlinear*Vm(i,jface)/dy + ky/dy^2;
         C(i,j,4) = isnonlinear*Up(iface-1,j)/dx + kx/dx^2;
         C(i,j,5) = isnonlinear*Vp(i,jface-1)/dy + ky/dy^2;
-%         C(i,j,6) = Ftau(i,j) - beta(jface-1)*Vp(i,jface-1) - beta(jface)*Vm(i,jface);
-        C(i,j,6) = Ftau(i,j) - beta(jface-1)*Vp(i,jface-1) - beta(jface)*Vm(i,jface);
+%         C(i,j,6) = Ftau(i,j) - beta(jface-1)*Vp(i,jface-1) - beta(jface)*Vm(i,jface); %First order upwind
+        C(i,j,6) = Ftau(i,j) - (beta(jface) + beta(jface-1))*(V(i,jface-1) + V(i,jface))/4; %interpolated to grid centers
     end
 end
 

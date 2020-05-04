@@ -27,6 +27,10 @@ end
 
 %preallocating 
 switch(lower(gridtype))
+    case 'a'
+        Uout = NaN.*ones(nx,ny,nt+1);
+        Vout = NaN.*ones(nx,ny,nt+1);
+    
     case 'c'
         Uout = NaN.*ones(nx+1,ny,nt+1);
         Vout = NaN.*ones(nx,ny+1,nt+1);
@@ -53,7 +57,7 @@ ctry = y(round(ny/2));
 switch(lower(gridtype))
     case 'c'
         yface = [y(1)-dy,y+dy];
-    case 'd'
+    case {'a','d'}
         yface = y;
 end
 % yface = [y(1)-dy,y+dy]; %y values on faces (matching V locations)
@@ -85,7 +89,7 @@ end
 psi = getboundaries(psi,nx,ny,xbound);
 
 % getting initial U/V from psi
-[U,V] = getvelocityfrompsi(psi,dx,dy,xbound,gridtype);
+[U,V] = getvelocityfrompsi(psi,dx,dy,gridtype);
 
 % recording initial states
 Uout(:,:,1) = U;
@@ -98,6 +102,8 @@ for i = 1:nt
     
     %calculate C matrix (eg Ckk)
     switch(lower(gridtype))
+        case 'a'
+            C = getiterationmatrix_Agrid(U,V,Ftau,beta,kx,ky,nx,dx,ny,dy,isnonlinear);
         case 'c'
             C = getiterationmatrix_Cgrid(U,V,Ftau,beta,kx,ky,nx,dx,ny,dy,isnonlinear);
         case 'd'
@@ -121,7 +127,7 @@ for i = 1:nt
     psi = getboundaries(psi,nx,ny,xbound);
     
     %calculate velocities from streamfunction
-    [U,V] = getvelocityfrompsi(psi,dx,dy,xbound,gridtype);
+    [U,V] = getvelocityfrompsi(psi,dx,dy,gridtype);
             
     %add current iteration to output variables
     Uout(:,:,i+1) = U;
@@ -140,6 +146,10 @@ end
 
 %% renaming variables for return
 switch lower(gridtype)
+    case 'a'
+        U = Uout;
+        V = Vout;
+        
     case 'c'
         U = 0.5.*(Uout(1:end-1,:,:) + Uout(2:end,:,:));
         V = 0.5.*(Vout(:,1:end-1,:) + Vout(:,2:end,:));
