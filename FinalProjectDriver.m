@@ -12,9 +12,9 @@ clc
 
 dx = 20000; %dx = 10 km
 dy = 20000; %dy = 10 km
-dt = 21600; %dt = 0.25 days (6 hours)
+% dt = 21600; %dt = 0.25 days (6 hours)
 % dt = 21600/2; %dt = 0.125 days (3 hours)
-% dt = 60; % 1 minute
+dt = 60; % 1 minute
 
 nx = 200; %2000 km domain w/ dx = 10 km
 ny = 100; %1000 km domain w/ dy = 10 km
@@ -33,15 +33,17 @@ planetype = 'real'; %beta changes with latitude
 xbound = 'periodic'; %periodic domain in x
 gridtype = 'D'; %either C or D grid (determines which faces velocities are on)
 
+isnonlinear = 0;
+
 
 %% Negative control run- no flow, no fluxes
 zeta_initial = zeros(nx,ny); %no flow
 % [~,~,psi,~,~,~,~,~] = runShallowWaterModel(zeta_initial,nx,dx,ny,dy,10,dt,...
-%     theta,minresidual,maxiterations,Ftau,kx,ky,ctrlat,planetype,xbound,'c');
+%     theta,minresidual,maxiterations,Ftau,kx,ky,ctrlat,planetype,xbound,'c',isnonlinear);
 % disp(['Test Run Grid C: AVG psi_f = ',num2str(nanmean(squeeze(psi(:,:,end)),'all')),...
 %     ',  STD psi_f = ',num2str(nanstd(squeeze(psi(:,:,end)),0,'all'))])
-[~,~,psi,~,x,y,~,~] = runShallowWaterModel(zeta_initial,nx,dx,ny,dy,10,dt,...
-    theta,minresidual,maxiterations,Ftau,kx,ky,ctrlat,planetype,xbound,'d');
+[~,~,~,~,x,y,~,~] = runShallowWaterModel(zeta_initial,nx,dx,ny,dy,10,dt,...
+    theta,minresidual,maxiterations,Ftau,kx,ky,ctrlat,planetype,xbound,'d',isnonlinear);
 % disp(['Test Run Grid D: AVG psi_f = ',num2str(nanmean(squeeze(psi(:,:,end)),'all')),...
 %     ',  STD psi_f = ',num2str(nanstd(squeeze(psi(:,:,end)),0,'all'))])
 
@@ -63,37 +65,40 @@ zeta_initial = zetamax.*zeta_initial./max(zeta_initial(:));
 
 %f-plane -ALL WORK
 % [U,V,psi,zeta,x,y,t,residual] = runShallowWaterModel(zeta_initial,nx,dx,ny,dy,500,dt,...
-%     theta,minresidual,maxiterations,Ftau,kx,ky,ctrlat,'f','periodic','c');
+%     theta,minresidual,maxiterations,Ftau,kx,ky,ctrlat,'f','periodic','c',isnonlinear);
 % [U,V,psi,zeta,x,y,t,residual] = runShallowWaterModel(zeta_initial,nx,dx,ny,dy,500,dt,...
-%     theta,minresidual,maxiterations,Ftau,kx,ky,ctrlat,'f','periodic','d');
-[U,V,psi,zeta,x,y,t,residual] = runShallowWaterModel(zeta_initial,nx,dx,ny,dy,500,dt,...
-    theta,minresidual,maxiterations,Ftau,kx,ky,ctrlat,'f','wall','c');
+%     theta,minresidual,maxiterations,Ftau,kx,ky,ctrlat,'f','periodic','d',isnonlinear);
 % [U,V,psi,zeta,x,y,t,residual] = runShallowWaterModel(zeta_initial,nx,dx,ny,dy,500,dt,...
-%     theta,minresidual,maxiterations,Ftau,kx,ky,ctrlat,'f','wall','d');
+%     theta,minresidual,maxiterations,Ftau,kx,ky,ctrlat,'f','wall','c',isnonlinear);
+% [U,V,psi,zeta,x,y,t,residual] = runShallowWaterModel(zeta_initial,nx,dx,ny,dy,500,dt,...
+%     theta,minresidual,maxiterations,Ftau,kx,ky,ctrlat,'f','wall','d',isnonlinear);
 
 %beta plane
+% [U,V,psi,zeta,x,y,t,residual] = runShallowWaterModel(zeta_initial,nx,dx,ny,dy,500,dt,...
+%     theta,minresidual,maxiterations,Ftau,kx,ky,ctrlat,'beta','periodic','c',isnonlinear);
+% [U,V,psi,zeta,x,y,t,residual] = runShallowWaterModel(zeta_initial,nx,dx,ny,dy,500,dt,...
+%     0,minresidual,maxiterations,Ftau,kx,ky,ctrlat,'beta','periodic','c',isnonlinear); %forward Euler method
+% [U,V,psi,zeta,x,y,t,residual] = runShallowWaterModel(zeta_initial,nx,dx,ny,dy,500,dt,...
+%     1,minresidual,maxiterations,Ftau,kx,ky,ctrlat,'beta','periodic','c',isnonlinear); %backward Euler method
 [U,V,psi,zeta,x,y,t,residual] = runShallowWaterModel(zeta_initial,nx,dx,ny,dy,500,dt,...
-    theta,minresidual,maxiterations,Ftau,kx,ky,ctrlat,'beta','periodic','c');
+    theta,minresidual,maxiterations,Ftau,kx,ky,ctrlat,'beta','periodic','d',isnonlinear);
 % [U,V,psi,zeta,x,y,t,residual] = runShallowWaterModel(zeta_initial,nx,dx,ny,dy,500,dt,...
-%     1,minresidual,maxiterations,Ftau,kx,ky,ctrlat,'beta','periodic','c'); %backward Euler method
-% [U,V,psi,zeta,x,y,t,residual] = runShallowWaterModel(zeta_initial,nx,dx,ny,dy,500,dt,...
-%     theta,minresidual,maxiterations,Ftau,kx,ky,ctrlat,'beta','periodic','d');
-% [U,V,psi,zeta,x,y,t,residual] = runShallowWaterModel(zeta_initial,nx,dx,ny,dy,500,dt,...
-%     theta,minresidual,maxiterations,Ftau,kx,ky,ctrlat,'beta','wall','c');
-% [U,V,psi,zeta,x,y,t,residual] = runShallowWaterModel(zeta_initial,nx,dx,ny,dy,500,dt,...
-%     theta,minresidual,maxiterations,Ftau,kx,ky,ctrlat,'beta','wall','d');
+%     theta,minresidual,maxiterations,Ftau,kx,ky,ctrlat,'beta','wall','c',isnonlinear);
+[U,V,psi,zeta,x,y,t,residual] = runShallowWaterModel(zeta_initial,nx,dx,ny,dy,500,dt,...
+    theta,minresidual,maxiterations,Ftau,kx,ky,ctrlat,'beta','wall','d',isnonlinear);
 
 %real
-[U,V,psi,zeta,x,y,t,residual] = runShallowWaterModel(zeta_initial,nx,dx,ny,dy,500,dt,...
-    theta,minresidual,maxiterations,Ftau,kx,ky,ctrlat,'real','periodic','c');
 % [U,V,psi,zeta,x,y,t,residual] = runShallowWaterModel(zeta_initial,nx,dx,ny,dy,500,dt,...
-%     theta,minresidual,maxiterations,Ftau,kx,ky,ctrlat,'real','periodic','d');
+%     theta,minresidual,maxiterations,Ftau,kx,ky,ctrlat,'real','periodic','c',isnonlinear);
 % [U,V,psi,zeta,x,y,t,residual] = runShallowWaterModel(zeta_initial,nx,dx,ny,dy,500,dt,...
-%     theta,minresidual,maxiterations,Ftau,kx,ky,ctrlat,'real','wall','c');
+%     theta,minresidual,maxiterations,Ftau,kx,ky,ctrlat,'real','periodic','d',isnonlinear);
 % [U,V,psi,zeta,x,y,t,residual] = runShallowWaterModel(zeta_initial,nx,dx,ny,dy,500,dt,...
-%     theta,minresidual,maxiterations,Ftau,kx,ky,ctrlat,'real','wall','d');
+%     theta,minresidual,maxiterations,Ftau,kx,ky,ctrlat,'real','wall','c',isnonlinear);
+% [U,V,psi,zeta,x,y,t,residual] = runShallowWaterModel(zeta_initial,nx,dx,ny,dy,500,dt,...
+%     theta,minresidual,maxiterations,Ftau,kx,ky,ctrlat,'real','wall','d',isnonlinear);
 
-makemodelplots('temp',psi,x/1000,y/1000,t/(24*3600),nx/2,ny/2,'\Psi (m^2/s)','%04.2f','days','km',true,1:501)
+makemodelplots('temp',psi,x/1000,y/1000,t/(24*3600),nx/2,ny/2,'\Psi (m^2/s)','%04.2f','days','km',true,1:501) %streamfunction
+makemodelplots('vorticity',zeta,x/1000,y/1000,t/(24*3600),nx/2,ny/2,'\zeta (s^{-1})','%04.2f','days','km',true,1:501) %voriticity
 
 %% Racing Rossby waves
 

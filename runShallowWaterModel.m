@@ -4,7 +4,7 @@
 % Driver function to run 2D hyperbolic shallow water model
 
 function [U,V,psi,zeta,x,y,t,residual] = runShallowWaterModel(zeta,nx,dx,ny,dy,nt,dt,...
-    theta,minresidual,maxiterations,Ftau,kx,ky,ctrlat,planetype,xbound,gridtype)
+    theta,minresidual,maxiterations,Ftau,kx,ky,ctrlat,planetype,xbound,gridtype,isnonlinear)
 
 
 %% configuring wind stress curl flux 
@@ -67,7 +67,7 @@ switch(lower(planetype))
         beta(1:length(yface)) = 0;
     otherwise
         warning('Invalid plane type specified- reverting to beta plane')
-        beta(1:length(yface)) = 2.*7.27E-5.*cosd(ctrlat).*dphidy; 
+        beta(1:length(yface)) = 2.*7.27E-5.*cosd(ctrlat)./6356000; 
 end
 
 
@@ -82,6 +82,7 @@ end
 
 %getting psi from zeta (initialize psi with zeros)
 [psi,~] = iterate_cgm(C_psi,zeros(nx,ny),zeta,nx,ny,xbound,minresidual,maxiterations);
+psi = getboundaries(psi,nx,ny,xbound);
 
 % getting initial U/V from psi
 [U,V] = getvelocityfrompsi(psi,dx,dy,xbound,gridtype);
@@ -89,7 +90,7 @@ end
 % recording initial states
 Uout(:,:,1) = U;
 Vout(:,:,1) = V;
-psiout(:,:,1) = psi;
+psiout(:,:,1) = psi(2:end-1,2:end-1);
 zetaout(:,:,1) = zeta;
 
 %% time iteration loop
@@ -98,9 +99,9 @@ for i = 1:nt
     %calculate C matrix (eg Ckk)
     switch(lower(gridtype))
         case 'c'
-            C = getiterationmatrix_Cgrid(U,V,Ftau,beta,kx,ky,nx,dx,ny,dy);
+            C = getiterationmatrix_Cgrid(U,V,Ftau,beta,kx,ky,nx,dx,ny,dy,isnonlinear);
         case 'd'
-            C = getiterationmatrix_Dgrid(U,V,Ftau,beta,kx,ky,nx,dx,ny,dy,xbound);
+            C = getiterationmatrix_Dgrid(U,V,Ftau,beta,kx,ky,nx,dx,ny,dy,xbound,isnonlinear);
     end
     
     %calculate LHS and RHS iteration matrices
@@ -116,7 +117,8 @@ for i = 1:nt
     [zeta,curresidual] = iterate_cgm(C_L,zeta,zeta_R,nx,ny,xbound,minresidual,maxiterations);
     
     %calculate streamfunction from voriticity with CGKM (elliptic problem)
-    [psi,~] = iterate_cgm(C_psi,psi,zeta,nx,ny,xbound,minresidual,maxiterations);
+    [psi,~] = iterate_cgm(C_psi,psi(2:end-1,2:end-1),zeta,nx,ny,xbound,minresidual,maxiterations);
+    psi = getboundaries(psi,nx,ny,xbound);
     
     %calculate velocities from streamfunction
     [U,V] = getvelocityfrompsi(psi,dx,dy,xbound,gridtype);
@@ -124,7 +126,7 @@ for i = 1:nt
     %add current iteration to output variables
     Uout(:,:,i+1) = U;
     Vout(:,:,i+1) = V;
-    psiout(:,:,i+1) = psi;
+    psiout(:,:,i+1) = psi(2:end-1,2:end-1);
     zetaout(:,:,i+1) = zeta;
     residual(i) = curresidual;
     
