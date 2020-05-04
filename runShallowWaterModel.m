@@ -4,7 +4,7 @@
 % Driver function to run 2D hyperbolic shallow water model
 
 function [U,V,psi,zeta,x,y,t] = runShallowWaterModel(zeta,nx,dx,ny,dy,nt,dt,...
-    minresidual,maxiterations,Ftau,kx,ky,ctrlat,planetype,xbound,gridtype,isnonlinear)
+    minresidual,maxiterations,Ftau,kx,ky,ctrlat,planetype,xbound,gridtype,friction)
 
 
 %% configuring wind stress curl flux 
@@ -102,15 +102,13 @@ for i = 1:nt
     %calculate C matrix (eg Ckk)
     switch(lower(gridtype))
         case 'a'
-            C = getiterationmatrix_Agrid(U,V,Ftau,beta,kx,ky,nx,dx,ny,dy,isnonlinear);
+            C = getiterationmatrix_Agrid(U,V,Ftau,beta,kx,ky,nx,dx,ny,dy,friction);
         case 'c'
-            C = getiterationmatrix_Cgrid(U,V,Ftau,beta,kx,ky,nx,dx,ny,dy,isnonlinear);
+            C = getiterationmatrix_Cgrid(U,V,Ftau,beta,kx,ky,nx,dx,ny,dy,friction);
         case 'd'
-            C = getiterationmatrix_Dgrid(U,V,Ftau,beta,kx,ky,nx,dx,ny,dy,xbound,isnonlinear);
+            C = getiterationmatrix_Dgrid(U,V,Ftau,beta,kx,ky,nx,dx,ny,dy,friction);
     end
     
-    %adding dissipation
-%     C(:,:,1) = C(:,:,1) - 1E-6;
 
     %explicitly solve d/dt(zeta^n) 
     ddt_zeta = iterate2Dexplicit(zeta,nx,ny,C,xbound);

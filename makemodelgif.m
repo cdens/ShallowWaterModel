@@ -1,4 +1,4 @@
-function makemodelgif(savedir,zeta,U,V,x,y,t,framestodo)
+function makemodelgif(savedir,zeta,U,V,x,y,t,framestodo,varlabel,delayval)
 close all
 
 
@@ -7,8 +7,7 @@ close all
 figure(); 
 set(gcf,'position',[1,1,1.8,1].*get(gcf,'position'))
 
-startvar = squeeze(zeta(:,:,1));
-cbounds = [min(startvar(:)),max(startvar(:))];
+cbounds = [min(zeta(:)),max(zeta(:))];
 xbounds = [min(x),max(x)];
 ybounds = [min(y),max(y)];
 
@@ -32,7 +31,7 @@ for i = framestodo
     
     hold on
     pcolor(ax,x,y,squeeze(zeta(:,:,i))'); 
-    quiver(x(1:dvx:end),y(1:dvy:end),Us(1:dvx:end,1:dvy:end)',Vs(1:dvx:end,1:dvy:end)','color','w')
+    quiver(ax,x(1:dvx:end),y(1:dvy:end),Us(1:dvx:end,1:dvy:end)',Vs(1:dvx:end,1:dvy:end)','color','w')
     
     colormap(ax,jet); 
     caxis(ax,cbounds)
@@ -46,16 +45,17 @@ for i = framestodo
     grid(ax,'on')
     set(ax,'layer','top')
     yc = colorbar(ax);
-    ylabel(yc,'\zeta (s^{-1})')
+    ylabel(yc,varlabel)
+    caxis(ax,cbounds)
     
     title(ax,['Time: ',sprintf('%04.2f',t(i)),' days, U_{MAX}=',sprintf('%04.2f',maxvel),'m/s'])
     
     drawnow
     
-    M(i) = getframe(gcf);
+    M(c) = getframe(gcf);
     
 end
 
 %saving gif
-movie2gif(M,[savedir,'_animation.gif'],'DelayTime',0.03,'LoopCount',Inf)
+movie2gif(M,[savedir,'_animation.gif'],'DelayTime',delayval,'LoopCount',Inf)
 
