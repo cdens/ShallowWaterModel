@@ -102,11 +102,11 @@ for i = 1:nt
     %calculate C matrix (eg Ckk)
     switch(lower(gridtype))
         case 'a'
-            C = getiterationmatrix_Agrid(U,V,Ftau,beta,kx,ky,nx,dx,ny,dy,friction);
+            C = getiterationmatrix_Agrid(U,V,squeeze(Ftau(:,:,i)),beta,kx,ky,nx,dx,ny,dy,friction);
         case 'c'
-            C = getiterationmatrix_Cgrid(U,V,Ftau,beta,kx,ky,nx,dx,ny,dy,friction);
+            C = getiterationmatrix_Cgrid(U,V,squeeze(Ftau(:,:,i)),beta,kx,ky,nx,dx,ny,dy,friction);
         case 'd'
-            C = getiterationmatrix_Dgrid(U,V,Ftau,beta,kx,ky,nx,dx,ny,dy,friction);
+            C = getiterationmatrix_Dgrid(U,V,squeeze(Ftau(:,:,i)),beta,kx,ky,nx,dx,ny,dy,friction);
     end
     
 

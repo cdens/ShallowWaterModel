@@ -1,4 +1,4 @@
-function makemodelgif(savedir,zeta,U,V,x,y,t,framestodo,varlabel,delayval)
+function makemodelgif(savedir,zeta,U,V,x,y,t,framestodo,varlabel,delayval,caxisval)
 close all
 
 
@@ -7,7 +7,12 @@ close all
 figure(); 
 set(gcf,'position',[1,1,1.8,1].*get(gcf,'position'))
 
-cbounds = [min(zeta(:)),max(zeta(:))];
+if ~isnan(caxisval)
+    cbounds = caxisval;
+else
+    cbounds = [min(zeta(:)),max(zeta(:))];
+end
+
 xbounds = [min(x),max(x)];
 ybounds = [min(y),max(y)];
 
@@ -48,6 +53,7 @@ for i = framestodo
     ylabel(yc,varlabel)
     caxis(ax,cbounds)
     
+%     title(ax,['Time: ',sprintf('%04.2f',t(i)),' days'])
     title(ax,['Time: ',sprintf('%04.2f',t(i)),' days, U_{MAX}=',sprintf('%04.2f',maxvel),'m/s'])
     
     drawnow
