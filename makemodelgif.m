@@ -53,8 +53,8 @@ for i = framestodo
     ylabel(yc,varlabel)
     caxis(ax,cbounds)
     
-%     title(ax,['Time: ',sprintf('%04.2f',t(i)),' days'])
-    title(ax,['Time: ',sprintf('%04.2f',t(i)),' days, U_{MAX}=',sprintf('%04.2f',maxvel),'m/s'])
+    title(ax,['Time: ',sprintf('%04.2f',t(i)),' days'])
+%     title(ax,['Time: ',sprintf('%04.2f',t(i)),' days, U_{MAX}=',sprintf('%04.2f',maxvel),'m/s'])
     
     drawnow
     

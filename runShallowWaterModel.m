@@ -109,7 +109,10 @@ for i = 1:nt
             C = getiterationmatrix_Dgrid(U,V,squeeze(Ftau(:,:,i)),beta,kx,ky,nx,dx,ny,dy,friction);
     end
     
-
+    %applying Arakawa jacobian (nonlinear vorticity advection)
+    zetabound = getboundaries(zeta,nx,ny,xbound);
+    C(:,:,6) = C(:,:,6) - get_arakawa(psi,zetabound,nx,ny,dx,dy);
+    
     %explicitly solve d/dt(zeta^n) 
     ddt_zeta = iterate2Dexplicit(zeta,nx,ny,C,xbound);
     if i == 1 %reindex time derivatives

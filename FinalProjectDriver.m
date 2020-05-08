@@ -20,6 +20,9 @@ nx = 200; %4000 km domain w/ dx = 20 km
 ny = 100; %2000 km domain w/ dy = 20 km
 nt = 1000; %200 days time domain @ 6 hrly, 23 days for 2000 sec
 
+%CFL parameter
+cfl = 7.27E-5*cosd(30)*nx^2*dx*dt/(2*pi^2*6536000);
+
 minresidual = 1E-8;
 maxiterations = 1000;
 
@@ -58,7 +61,6 @@ zeta_initial_rossby = zeros(nx,ny); %no flow
 zeta_initial_rossby(rr <= r) = cos((pi/(2*r)).*rr(rr <= r)); %cosine tapered to 0 at distance r
 zeta_initial_rossby = zetamax.*zeta_initial_rossby./max(zeta_initial_rossby(:));
 
-
 %% f-plane (with or without friction)
 
 [U,V,psi,zeta,x,y,t] = runShallowWaterModel(zeta_initial_rossby,nx,dx,ny,dy,nt,dt,... 
@@ -69,7 +71,7 @@ makemodelplots('Output/fplane_withfriction_psi',psi,x/1000,y/1000,t/(24*3600),nx
 [U,V,psi,zeta,x,y,t] = runShallowWaterModel(zeta_initial_rossby,nx,dx,ny,dy,nt,dt,... 
     minresidual,maxiterations,Ftau,kx,ky,ctrlat,'f','periodic','a',0);
 
-makemodelplots('Output/fplane_frictionless_psi',psi,x/1000,y/1000,t/(24*3600),nx/2,ny/2,'\Psi (m^2/s)') 
+makemodelplots('Output/fplane_frictionless_psi_test',psi,x/1000,y/1000,t/(24*3600),nx/2,ny/2,'\Psi (m^2/s)') 
 
 
 %% beta-plane
@@ -112,9 +114,9 @@ makemodelgif('Output/betaplane_wall_psi',psi,U,V,x/1000,y/1000,t/(24*3600),1:5:l
 
 %% adding forcing- basin spinup
 
-Ftau_spinup = -2E-10;
+Ftau_spinup = -2E-13;
 kspinup = 10^1;
-spinupfriction = 0.5;
+spinupfriction = friction;
 
 nxspin = nx; %same number of points in x
 nyspin = ny; %same number of points in y
@@ -126,8 +128,10 @@ ntspin = 1500; %run it out a little longer
     minresidual,maxiterations,Ftau_spinup,kspinup,kspinup,ctrlat,'beta','wall','a',friction);
 
 makemodelplots('Output/spinup_psi',psi,x/1000,y/1000,t/(24*3600),nx/2,ny/2,'\psi (m^2/s)') 
+makemodelplots('Output/spinup_zeta',zeta,x/1000,y/1000,t/(24*3600),nx/2,ny/2,'\zeta (s^{-1})') 
 makemodelgif('Output/spinup_zeta',zeta,U,V,x/1000,y/1000,t/(24*3600),1:5:length(t),'\zeta (s^{-1})',0.05,caxisval)
 makemodelgif('Output/spinup_psi',psi,U,V,x/1000,y/1000,t/(24*3600),1:5:length(t),'\psi (m s^{-1})',0.05,caxisval)
+savemodelfinalframe('Output/spinup_psi',psi,U,V,x/1000,y/1000,t/(24*3600),'\psi (m s^{-1})',caxisval)
 % makemodelgif('Output/spinup_zeta_noUlabel',zeta,U,V,x/1000,y/1000,t/(24*3600),1:5:length(t),'\zeta (s^{-1})',0.05,caxisval)
 % makemodelgif('Output/spinup_psi_noUlabel',psi,U,V,x/1000,y/1000,t/(24*3600),1:5:length(t),'\psi (m s^{-1})',0.05,caxisval)
 
@@ -143,7 +147,7 @@ ntvary = 1000; %run it out a little longer
 
 %setting up wind stress forcing- applying a sinusoidal forcing to a square
 %region on the west side of the domain
-Ftaumax = 2E-10; %amplitude forcing
+Ftaumax = 2E-13; %amplitude forcing
 Ftau_timevary = zeros(nx,ny,nt);
 forcesquare = zeros(nx,ny); %x/y region for forcing
 forcesquare(190:198,46:54) = 1; %vertically centered near eastern bound
@@ -158,7 +162,7 @@ end
     minresidual,maxiterations,Ftau_timevary,kspinup,kspinup,ctrlat,'real','wall','a',friction);
 makemodelplots('Output/timevarying_psi',psi,x/1000,y/1000,t/(24*3600),nx/2,ny/2,'\psi (m^2/s)')
 makemodelgif('Output/timevarying_zeta',zeta,U,V,x/1000,y/1000,t/(24*3600),1:5:length(t),'\zeta (s^{-1})',0.05,caxisval)
-makemodelgif('Output/timevarying_psi',psi,U,V,x/1000,y/1000,t/(24*3600),1:5:length(t),'\psi (m s^{-1})',0.05,[-2,2].*1E5)
+makemodelgif('Output/timevarying_psi',psi,U,V,x/1000,y/1000,t/(24*3600),1:5:length(t),'\psi (m s^{-1})',0.05,[-2,2].*1E2)
 
 
 %wave frequency lower than forcing frequency- 80 N
@@ -166,7 +170,7 @@ makemodelgif('Output/timevarying_psi',psi,U,V,x/1000,y/1000,t/(24*3600),1:5:leng
     minresidual,maxiterations,Ftau_timevary,kspinup,kspinup,80,'real','wall','a',friction);
 makemodelplots('Output/timevarying80N_psi',psi,x/1000,y/1000,t/(24*3600),nx/2,ny/2,'\psi (m^2/s)')
 makemodelgif('Output/timevarying80N_zeta',zeta,U,V,x/1000,y/1000,t/(24*3600),1:5:length(t),'\zeta (s^{-1})',0.05,caxisval)
-makemodelgif('Output/timevarying80N_psi',psi,U,V,x/1000,y/1000,t/(24*3600),1:5:length(t),'\psi (m s^{-1})',0.05,[-2,2].*1E5)
+makemodelgif('Output/timevarying80N_psi',psi,U,V,x/1000,y/1000,t/(24*3600),1:5:length(t),'\psi (m s^{-1})',0.05,[-2,2].*1E2)
 
 
 %wave frequency higher than forcing frequency- 0 N
@@ -174,4 +178,4 @@ makemodelgif('Output/timevarying80N_psi',psi,U,V,x/1000,y/1000,t/(24*3600),1:5:l
     minresidual,maxiterations,Ftau_timevary,kspinup,kspinup,0,'real','wall','a',friction);
 makemodelplots('Output/timevarying0N_psi',psi,x/1000,y/1000,t/(24*3600),nx/2,ny/2,'\psi (m^2/s)')
 makemodelgif('Output/timevarying0N_zeta',zeta,U,V,x/1000,y/1000,t/(24*3600),1:5:length(t),'\zeta (s^{-1})',0.05,caxisval)
-makemodelgif('Output/timevarying0N_psi',psi,U,V,x/1000,y/1000,t/(24*3600),1:5:length(t),'\psi (m s^{-1})',0.05,[-2,2].*1E5)
+makemodelgif('Output/timevarying0N_psi',psi,U,V,x/1000,y/1000,t/(24*3600),1:5:length(t),'\psi (m s^{-1})',0.05,[-2,2].*1E2)
